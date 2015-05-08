@@ -17,7 +17,7 @@ setup(
     author_email='andre.keller@vshn.ch',
     # BSD 3-Clause License:
     # - http://opensource.org/licenses/BSD-3-Clause
-    license='MIT',
+    license='BSD',
 
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
