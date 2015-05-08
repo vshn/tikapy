@@ -1,5 +1,13 @@
 #!/usr/bin/python3
 
+#
+# Copyright (c) 2015, VSHN AG, info@vshn.ch
+# Licensed under "BSD 3-Clause". See LICENSE file.
+#
+# Authors:
+#  - Andre Keller <andre.keller@vshn.ch>
+#
+
 """
 MikroTik Router OS Python API
 """
