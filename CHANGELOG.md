@@ -5,7 +5,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased][unreleased]
 
 ### Changed
-- [#1] Return ID when adding new records (@andre-luiz-dos-santos)
+- [#1](https://github.com/vshn/tikapy/pull/1) Return ID when adding new records 
+  [@andre-luiz-dos-santos](https://github.com/andre-luiz-dos-santos)
 
 ### Fixed
 - Wrong LICENSE in setup.py
