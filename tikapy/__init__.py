@@ -171,7 +171,7 @@ class TikapyBaseClient():
         Send command sequence to the API.
 
         :param words: List of command sequences to send to the API
-        :returns: dict containing response.
+        :returns: dict containing response or ID.
         :raises: ClientError - If client could not talk to remote API.
                  ValueError - On invalid input.
         """
@@ -188,8 +188,13 @@ class TikapyBaseClient():
         Converts MikroTik RouterOS output to python dict / JSON.
 
         :param tikoutput:
-        :return: doct containing response.
+        :return: dict containing response or ID.
         """
+        try:
+            if tikoutput[0][0] == '!done':
+                return tikoutput[0][1]['ret']
+        except (IndexError, KeyError):
+            pass
         try:
             return {
                 d['.id'][1:]: d for d in ([x[1] for x in tikoutput])
