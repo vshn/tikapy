@@ -241,4 +241,8 @@ class TikapySslClient(TikapyBaseClient):
         Connects a ssl socket.
         """
         self._connect_socket()
-        self._sock = ssl.wrap_socket(self._base_sock)
+        try:
+            self._sock = ssl.wrap_socket(self._base_sock)
+        except ssl.SSLError:
+            LOG.error('could not establish SSL connection')
+            raise ClientError('could not establish SSL connection')
