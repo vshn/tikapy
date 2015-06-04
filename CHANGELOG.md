@@ -21,5 +21,5 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 - initial public release
 
-[unreleased]: https://github.com/vshn/tikapy/compare/v0.1.1...HEAD
-[0.1.2]: https://github.com/vshn/tikapy/compare/v0.1.1...HEAD
+[unreleased]: https://github.com/vshn/tikapy/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/vshn/tikapy/compare/v0.1.1...v0.1.2
