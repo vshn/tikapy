@@ -305,12 +305,10 @@ class ApiRos:
         Args:
             string - String to send
         """
-        pos = 0
-        while pos < len(string):
-            sent_bytes = self.sock.send(bytes(string[pos:], 'UTF-8'))
-            if sent_bytes == 0:
+        for char in string:
+            sent_bytes = self.sock.send(bytes(char, 'UTF-8'))
+            if not sent_bytes == 1:
                 raise ApiUnrecoverableError("could not send to socket")
-            pos = pos + sent_bytes
 
     def read_sock(self, length):
         """
