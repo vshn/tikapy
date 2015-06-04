@@ -5,7 +5,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased][unreleased]
 
 ### Fixed
-- Case where single char is more than one byte when sending to socket.
+- Encoding of word length when sending words longer than 127.
 - Error handling during SSL connection setup.
 
 ## [0.1.2] - 2015-06-01

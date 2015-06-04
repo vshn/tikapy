@@ -306,7 +306,7 @@ class ApiRos:
             string - String to send
         """
         for char in string:
-            sent_bytes = self.sock.send(bytes(char, 'UTF-8'))
+            sent_bytes = self.sock.send(bytes(char, 'latin-1'))
             if not sent_bytes == 1:
                 raise ApiUnrecoverableError("could not send to socket")
 
