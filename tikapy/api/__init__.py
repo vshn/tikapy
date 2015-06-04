@@ -300,7 +300,7 @@ class ApiRos:
 
     def write_sock(self, string):
         """
-        write string to API socket, char by char
+        write string to API socket
 
         Args:
             string - String to send
