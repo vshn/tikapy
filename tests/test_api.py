@@ -29,7 +29,6 @@ class TestWrites(TestCase):
                 sock.send.side_effect = lambda b: len(b)
                 api.write_word(inp)
                 self.assertEqual(
-                    b''.join(c[0][0] for c in sock.send.call_args_list),
+                    b''.join(c[0][0] for c in sock.sendall.call_args_list),
                     bytes(out, 'latin-1'))
-                # Calling 'send' for each individual character is not efficient.
-                #self.assertLessEqual(sock.send.call_count, 5)
+                self.assertLessEqual(sock.sendall.call_count, 5)
