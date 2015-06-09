@@ -6,10 +6,14 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 - Make write_sock more efficient, not sending byte by byte anymore.
+  [@andre-luiz-dos-santos](https://github.com/andre-luiz-dos-santos)
 
 ### Fixed
 - Encoding of word length when sending words longer than 127.
 - Error handling during SSL connection setup.
+
+### Removed
+- Python 3.2 compatibility.
 
 ## [0.1.2] - 2015-06-01
 
