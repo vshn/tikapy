@@ -4,6 +4,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased][unreleased]
 
+### Changed
+- Make write_sock more efficient, not sending byte by byte anymore.
+
 ### Fixed
 - Encoding of word length when sending words longer than 127.
 - Error handling during SSL connection setup.

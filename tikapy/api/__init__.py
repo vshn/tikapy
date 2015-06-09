@@ -300,15 +300,15 @@ class ApiRos:
 
     def write_sock(self, string):
         """
-        write string to API socket, char by char
+        write string to API socket
 
         Args:
             string - String to send
         """
-        for char in string:
-            sent_bytes = self.sock.send(bytes(char, 'latin-1'))
-            if not sent_bytes == 1:
-                raise ApiUnrecoverableError("could not send to socket")
+        try:
+            self.sock.sendall(bytes(string, 'latin-1'))
+        except OSError as exc:
+            raise ApiUnrecoverableError("could not send to socket") from exc
 
     def read_sock(self, length):
         """
