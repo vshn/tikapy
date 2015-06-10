@@ -17,7 +17,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Error handling during SSL connection setup.
 
 ### Removed
-- Python 3.2 compatibility.
+- Python 3.2/3.3 compatibility.
 
 ## [0.1.2] - 2015-06-01
 
