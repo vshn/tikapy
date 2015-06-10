@@ -4,6 +4,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased][unreleased]
 
+### Added
+- Added first tests.
+  [@andre-luiz-dos-santos](https://github.com/andre-luiz-dos-santos)
+
 ### Changed
 - Make write_sock more efficient, not sending byte by byte anymore.
   [@andre-luiz-dos-santos](https://github.com/andre-luiz-dos-santos)
