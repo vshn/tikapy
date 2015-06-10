@@ -4,7 +4,9 @@ tikapy, a python3 API client for MikroTik RouterOS
 
 tikapy is a simple API client for MikroTik RouterOS written for python3.
 
-[![Build Status](https://travis-ci.org/vshn/tikapy.svg?branch=master)](https://travis-ci.org/vshn/tikapy)
+-----
+|travis_ci|
+-----
 
 ============
 Installation
@@ -29,3 +31,7 @@ Examples
     
     client.login('api-test', 'api123')
     pprint(client.talk(['/routing/ospf/neighbor/getall']))
+
+.. |travis_ci| image:: https://api.travis-ci.org/vshn/tikapy.svg?branch=master
+   :target: https://travis-ci.org/vshn/tikapy
+   :alt: Travis CI build status (master)
