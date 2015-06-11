@@ -7,10 +7,13 @@ This project adheres to `Semantic Versioning`_.
 `Unreleased`_
 -------------
 
+`0.2.0`_ - 2015-06-11
+---------------------
+
 Added
 ~~~~~
 
-- Added first tests.
+- `#2`_ Added first tests.
   `@andre-luiz-dos-santos`_
 
 Changed
@@ -53,7 +56,9 @@ Added
 - initial public release
 
 .. _Semantic Versioning: http://semver.org/
-.. _Unreleased: https://github.com/vshn/tikapy/compare/v0.1.2...HEAD
+.. _Unreleased: https://github.com/vshn/tikapy/compare/v0.2.0...HEAD
+.. _0.2.0: https://github.com/vshn/tikapy/compare/v0.1.2...v0.2.0
 .. _0.1.2: https://github.com/vshn/tikapy/compare/v0.1.1...v0.1.2
 .. _#1: https://github.com/vshn/tikapy/pull/1
+.. _#2: https://github.com/vshn/tikapy/pull/2
 .. _@andre-luiz-dos-santos: https://github.com/andre-luiz-dos-santos

@@ -10,7 +10,7 @@ here = path.abspath(path.dirname(__file__))
 
 setup(
     name='tikapy',
-    version='0.1.2',
+    version='0.2.0',
     description='A python client for the MikroTik RouterOS API',
     url='https://github.com/vshn/tikapy',
     test_suite="tests",
