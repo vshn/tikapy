@@ -7,6 +7,15 @@ This project adheres to `Semantic Versioning`_.
 `Unreleased`_
 -------------
 
+`0.2.1`_ - 2015-06-11
+---------------------
+
+Fixed
+~~~~~
+
+- README formatting
+
+
 `0.2.0`_ - 2015-06-11
 ---------------------
 
@@ -56,7 +65,8 @@ Added
 - initial public release
 
 .. _Semantic Versioning: http://semver.org/
-.. _Unreleased: https://github.com/vshn/tikapy/compare/v0.2.0...HEAD
+.. _Unreleased: https://github.com/vshn/tikapy/compare/v0.2.1...HEAD
+.. _0.2.1: https://github.com/vshn/tikapy/compare/v0.2.0...v0.2.1
 .. _0.2.0: https://github.com/vshn/tikapy/compare/v0.1.2...v0.2.0
 .. _0.1.2: https://github.com/vshn/tikapy/compare/v0.1.1...v0.1.2
 .. _#1: https://github.com/vshn/tikapy/pull/1
