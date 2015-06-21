@@ -325,5 +325,5 @@ class ApiRos:
             chunk = self.sock.recv(min(length - len(string), 4096))
             if not chunk:
                 raise ApiUnrecoverableError("could not read from socket")
-            string = string + chunk.decode('UTF-8', 'replace')
+            string = string + chunk.decode('latin-1', 'replace')
         return string
