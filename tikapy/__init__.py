@@ -12,10 +12,11 @@
 MikroTik RouterOS Python API Clients
 """
 
+import asyncio
 import logging
 import socket
 import ssl
-from .api import ApiError, ApiRos, ApiUnrecoverableError
+from .api import ApiError, ApiRos, ApiUnrecoverableError, RosProtocol
 
 LOG = logging.getLogger(__name__)
 
@@ -41,6 +42,8 @@ class TikapyBaseClient():
         self._base_sock = None
         self._sock = None
         self._api = None
+
+        self._loop = asyncio.get_event_loop()
 
     @property
     def address(self):
@@ -131,6 +134,7 @@ class TikapyBaseClient():
 
             try:
                 self._base_sock.connect(sockaddr)
+                self._base_sock.setblocking(False)
             except socket.error:
                 self._base_sock.close()
                 self._base_sock = None
@@ -150,6 +154,18 @@ class TikapyBaseClient():
         """
         self._connect_socket()
         self._sock = self._base_sock
+        #self._start_client()
+
+    def _start_client(self):
+        task = asyncio.Task(
+            self._loop.create_connection(
+                RosProtocol,
+                host=None,
+                port=None,
+                sock=self._sock
+            )
+        )
+        self._loop.run_until_complete(task)
 
     def login(self, user, password):
         """
