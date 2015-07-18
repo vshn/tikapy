@@ -272,7 +272,8 @@ class RosProtocol(asyncio.Protocol):
             length += ord(data[pos])
             length <<= 8
             # read lowest byte
-            length += ord(data[2])
+            pos += 1
+            length += ord(data[pos])
         # if the four most significant bits are 1110
         # length is >= 2097152, but < 268435456
         elif (length & 0xF0) == 0xE0:
