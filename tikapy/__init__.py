@@ -16,7 +16,7 @@ import asyncio
 import logging
 import socket
 import ssl
-from .api import ApiError, ApiRos, ApiUnrecoverableError, RosProtocol
+from .api import ApiError, ApiRos, ApiError, RosProtocol
 
 LOG = logging.getLogger(__name__)
 
@@ -179,7 +179,7 @@ class TikapyBaseClient():
         self._api = ApiRos(self._sock)
         try:
             self._api.login(user, password)
-        except (ApiError, ApiUnrecoverableError) as exc:
+        except (ApiError, ApiError) as exc:
             raise ClientError('could not login') from exc
 
     def talk(self, words):
@@ -194,7 +194,7 @@ class TikapyBaseClient():
         if isinstance(words, list) and all(isinstance(x, str) for x in words):
             try:
                 return self.tik_to_json(self._api.talk(words))
-            except (ApiError, ApiUnrecoverableError) as exc:
+            except (ApiError, ApiError) as exc:
                 raise ClientError('could not talk to api') from exc
         raise ValueError('words needs to be a list of strings')
 

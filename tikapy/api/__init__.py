@@ -1,43 +1,65 @@
 #!/usr/bin/env python3
 
+"""
+asyncio implementation of MikroTik RouterOS API
+"""
+
 import asyncio
 import binascii
 import hashlib
+import itertools
 import logging
 LOG = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
 
 class ApiError(Exception):
-    pass
-class ApiUnrecoverableError(Exception):
-    pass
+    """
+    Exception returned when an API call fails
+    """
+
+
 class ClientError(Exception):
     """
     Exception returned when a API client interaction fails.
     """
-    pass
 
 
 class RosProtocol(asyncio.Protocol):
+    """
+    asyncio protocol implementing MikroTik RouterOS API
+    """
 
     def __init__(self):
-        self._tag = 0
+        """
+        Initialize protocol instance
+        """
         self._queries = {}
         self._replies = {}
+        self._tag = itertools.count(start=1)
+        self._transport = None
 
     def connection_made(self, transport):
-        self.transport = transport
+        """
+        callback triggered when a connection is established.
+
+        :param transport: Transport representing the connection.
+        """
+        self._transport = transport
         LOG.debug("connection made")
 
     def data_received(self, data):
+        """
+        callback triggered when data is received
+
+        :param data: Data received from socket
+        """
         data = data.decode('latin-1', 'replace')
-        pos = 0
         while True:
             pos, tikout = self._read_sentence(data)
             try:
                 self._handle_response(tikout)
-            except (ApiError, ApiUnrecoverableError):
+            except ApiError:
                 break
             if pos < len(data):
                 data = data[pos:]
@@ -46,33 +68,42 @@ class RosProtocol(asyncio.Protocol):
 
     @asyncio.coroutine
     def query(self, words):
-        self._tag += 1
-        self._talk(words, self._tag)
-        f = asyncio.Future()
-        self._queries[self._tag] = f
-        response = yield from f
+        """
+        Send query RouterOS API
+
+        :param words: Words to send to API
+        :type words list
+        :return: API response
+        :rtype: dict
+        """
+        #
+        tag = next(self._tag)
+        future = asyncio.Future()
+        self._queries[tag] = future
+        self._talk(words, tag)
+        response = yield from future
         return response
 
     @asyncio.coroutine
     def login(self, username, password):
         """
-        Perform API login
+        Performs API login
 
-        Args:
-            username - Username used to login
-            password - Password used to login
+        :param username: API user
+        :type username str
+        :param password: Password for API user
+        :type password str
         """
 
         # request login
         # Mikrotik answers with a challenge in the 'ret' attribute
-        # 'ret' attribute accessible as attrs['ret']
-        self._tag += 1
-        self._talk(['/login'], self._tag)
+        tag = next(self._tag)
+        self._talk(['/login'], tag)
 
-        f = asyncio.Future()
-        self._queries[self._tag] = f
+        future = asyncio.Future()
+        self._queries[tag] = future
 
-        response_dict = yield from f
+        response_dict = yield from future
         _, response = response_dict.popitem()
 
         ret = response['ret']
@@ -85,38 +116,39 @@ class RosProtocol(asyncio.Protocol):
         response = "00" + binascii.hexlify(response.digest()).decode('latin-1')
 
         # send response & login request
-        self._tag += 1
+        tag = next(self._tag)
         self._talk([
             "/login",
             "=name=%s" % username,
             "=response=%s" % response
-        ], self._tag)
+        ], tag)
 
-        f = asyncio.Future()
-        self._queries[self._tag] = f
-        yield from f
+        future = asyncio.Future()
+        self._queries[tag] = future
+        yield from future
 
     def _talk(self, words, tag):
         """
-        Communicate with the API
+        Sends API words to transport, tagged with an identifier.
 
-        Args:
-            words - List of API words to send
+        :param words: List of API words to send to transport
+        :type words list
+        :param tag: Identifying tag
+        :type tag int
         """
         if not isinstance(words, list):
             raise ApiError('words need to be a list')
         words.append(".tag=%d" % tag)
         self._write_sentence(words)
 
-
     def _write_sentence(self, words):
         """
-        writes a sentence word by word to API socket.
+        writes a sentence word by word to API socket (asyncio Transport).
 
         Ensures sentence is terminated with a zero-length word.
 
-        Args:
-            words - List of API words to send
+        :param words: List of API words to send to transport
+        :type words list
         """
         for word in words:
             self.write_word(word)
@@ -125,13 +157,15 @@ class RosProtocol(asyncio.Protocol):
 
     def _read_sentence(self, data):
         """
-        reads sentence word by word from API socket.
+        reads sentence word by word from stream.
 
         API uses zero-length word to terminate sentence, so words are read
         until zero-length word is received.
 
-        Returns:
-            words - List of API words read from socket
+        :param data: Stream to read from
+        :type data str
+        :return: Current position in stream and words read from API
+        :rtype: tuple (pos as int, words as list)
         """
         words = []
         pos = 0
@@ -144,54 +178,54 @@ class RosProtocol(asyncio.Protocol):
 
     def write_word(self, word):
         """
-        writes word to API socket
+        writes word to API socket (asyncio Transport)
 
         The MikroTik API expects the length of the word to be sent over the
         wire using a special encoding followed by the word itself.
 
         See http://wiki.mikrotik.com/wiki/Manual:API#API_words for details.
 
-        Args:
-            word
+        :param word: Word to write to transport
+        :type word str
         """
-
         length = len(word)
         LOG.debug("<<< %s", word)
         # word length < 128
         if length < 0x80:
-            self.write_sock(chr(length))
+            self.write_to_transport(chr(length))
         # word length < 16384
         elif length < 0x4000:
             length |= 0x8000
-            self.write_sock(chr((length >> 8) & 0xFF))
-            self.write_sock(chr(length & 0xFF))
+            self.write_to_transport(chr((length >> 8) & 0xFF))
+            self.write_to_transport(chr(length & 0xFF))
         # word length < 2097152
         elif length < 0x200000:
             length |= 0xC00000
-            self.write_sock(chr((length >> 16) & 0xFF))
-            self.write_sock(chr((length >> 8) & 0xFF))
-            self.write_sock(chr(length & 0xFF))
+            self.write_to_transport(chr((length >> 16) & 0xFF))
+            self.write_to_transport(chr((length >> 8) & 0xFF))
+            self.write_to_transport(chr(length & 0xFF))
         # word length < 268435456
         elif length < 0x10000000:
             length |= 0xE0000000
-            self.write_sock(chr((length >> 24) & 0xFF))
-            self.write_sock(chr((length >> 16) & 0xFF))
-            self.write_sock(chr((length >> 8) & 0xFF))
-            self.write_sock(chr(length & 0xFF))
+            self.write_to_transport(chr((length >> 24) & 0xFF))
+            self.write_to_transport(chr((length >> 16) & 0xFF))
+            self.write_to_transport(chr((length >> 8) & 0xFF))
+            self.write_to_transport(chr(length & 0xFF))
         # word length < 549755813888
         elif length < 0x8000000000:
-            self.write_sock(chr(0xF0))
-            self.write_sock(chr((length >> 24) & 0xFF))
-            self.write_sock(chr((length >> 16) & 0xFF))
-            self.write_sock(chr((length >> 8) & 0xFF))
-            self.write_sock(chr(length & 0xFF))
+            self.write_to_transport(chr(0xF0))
+            self.write_to_transport(chr((length >> 24) & 0xFF))
+            self.write_to_transport(chr((length >> 16) & 0xFF))
+            self.write_to_transport(chr((length >> 8) & 0xFF))
+            self.write_to_transport(chr(length & 0xFF))
         else:
-            raise ApiUnrecoverableError("word-length exceeded")
-        self.write_sock(word)
+            raise ApiError("word-length exceeded")
+        self.write_to_transport(word)
 
-    def _read_word(self, pos, data):
+    @staticmethod
+    def _read_word(pos, data):
         """
-        read word from API socket
+        read encoded word from a stream
 
         The MikroTik API sends the length of the word to be received over the
         wire using a special encoding followed by the word itself.
@@ -201,6 +235,12 @@ class RosProtocol(asyncio.Protocol):
 
         See http://wiki.mikrotik.com/wiki/Manual:API#API_words for details.
 
+        :param pos: Initial offset, where in the stream to start reading
+        :type pos int
+        :param data: Stream to read from
+        :type data str
+        :return: Returns new offset and the decoded word as a tuple
+        :rtype: tuple
         """
         # value of first byte determines how many bytes the encoded length
         # of the words will have.
@@ -269,7 +309,7 @@ class RosProtocol(asyncio.Protocol):
             pos += 1
             length += ord(data[pos])
         else:
-            raise ApiUnrecoverableError("unknown control byte received")
+            raise ApiError("unknown control byte received")
 
         # read actual word from socket, using length determined above
         pos += 1
@@ -277,59 +317,57 @@ class RosProtocol(asyncio.Protocol):
         LOG.debug(">>> %s", ret)
         return pos + length, ret
 
-    def write_sock(self, string):
+    def write_to_transport(self, string):
         """
-        write string to API socket
+        write string to API socket (asyncio Transport)
 
-        Args:
-            string - String to send
+        :param string: Data to be written to the transport
+        :type string str
         """
-        self.transport.write(bytes(string, 'latin-1'))
+        self._transport.write(bytes(string, 'latin-1'))
 
-    def read_sock(self, length):
+    @staticmethod
+    def _extract_attribute(rawoutput):
         """
-        read string with specified length from API socket
+        Extracts the word attributes from the raw RouterOS API output.
 
-        Args:
-            length - Number of chars to read from socket
-        Returns:
-            string - String as read from socket
+        :param rawoutput: Output as received on the socket
+        :type rawoutput list
+        :return: Extracted attributes or simple word if no attributes are found
+        :rtype: dict | str
         """
-        string = ''
-        while len(string) < length:
-            # read data from socket with a maximum buffer size of 4k
-            chunk = self.transport.sock.recv(min(length - len(string), 4096))
-            if not chunk:
-                raise ApiUnrecoverableError("could not read from socket")
-            string = string + chunk.decode('latin-1', 'replace')
-        return string
-
-    def _handle_response(self, tikoutput):
-        """
-        Converts MikroTik RouterOS output to python dict / JSON.
-
-        :param tikoutput:
-        :return: dict containing response or ID.
-        """
-
-        reply = tikoutput.pop(0)
         attributes = {}
-        for word in tikoutput:
+        for word in rawoutput:
             try:
                 second_eq_pos = word.index('=', 1)
-            except (IndexError, ValueError):
+            except IndexError:
                 attributes[word] = ''
+            except ValueError:
+                attributes = str(word)
             else:
                 if word.startswith('.'):
                     attributes[word[:second_eq_pos]] = word[second_eq_pos + 1:]
                 else:
                     attributes[word[1:second_eq_pos]] = word[second_eq_pos + 1:]
+        return attributes
+
+    def _handle_response(self, rawoutput):
+        """
+        Converts MikroTik RouterOS API output to python dict.
+
+        Results are stored in the futures matching the original query.
+
+        :param rawoutput: Output as received from socket.
+        :type rawoutput list
+        """
+        reply = rawoutput.pop(0)
+        attributes = self._extract_attribute(rawoutput)
 
         if reply == '!fatal':
-            try:
-                fatal = ApiUnrecoverableError(" ".join(attributes.keys()))
-            except (AttributeError, IndexError, TypeError):
-                fatal = ApiUnrecoverableError("Unknown error occured")
+            if isinstance(attributes, str):
+                fatal = ApiError(attributes)
+            else:
+                fatal = ApiError("Unknown error occured")
             for _, future in self._queries.items():
                 if future is not None:
                     future.set_exception(fatal)
@@ -337,29 +375,41 @@ class RosProtocol(asyncio.Protocol):
             raise fatal
 
         if '.tag' in attributes.keys():
-            id = int(attributes['.tag'])
-            future = self._queries.get(id, None)
-            self._replies.setdefault(id, []).append(attributes)
+            query_id = int(attributes['.tag'])
+            future = self._queries.get(query_id, None)
+            self._replies.setdefault(query_id, []).append(attributes)
             if reply == '!done':
                 if future is not None:
-                    del self._queries[id]
-                    future.set_result(self.tik_to_json(self._replies[id]))
-                    del self._replies[id]
+                    del self._queries[query_id]
+                    future.set_result(
+                        self.index_api_reply(self._replies[query_id])
+                    )
+                    del self._replies[query_id]
             elif reply == '!trap':
                 if future is not None:
                     future.set_exception(ApiError(attributes['message']))
                     raise ApiError(attributes['message'])
 
     @staticmethod
-    def tik_to_json(tikoutput):
-        jsonoutput = {}
-        for result in tikoutput:
-            if not '.id' in result.keys():
-                jsonoutput["tag-%s" % result['.tag']] = result
-            else:
-                jsonoutput[result['.id']] = result
-        return jsonoutput
+    def index_api_reply(api_reply):
+        """
+        Indexing Mikrotik API replies.
 
+        :param api_reply: List of dicts containing API replies.
+        :type api_reply list
+        :return: API replies indexed by .id or .tag if .id is not part of reply
+        :rtype: dict
+        """
+        indexed_replies = {}
+        for result in api_reply:
+            if '.id' not in result.keys():
+                indexed_replies["tag-%s" % result['.tag']] = result
+            else:
+                indexed_replies[result['.id']] = result
+        return indexed_replies
+
+
+# THE FOLLOWING LINES ARE DEMO/TEST CODE THAT IS BEING REMOVED
 @asyncio.coroutine
 def run():
     loop = asyncio.get_event_loop()
@@ -369,7 +419,7 @@ def run():
         yield from protocol.login('api-test', 'api123')
         response = yield from protocol.query(['/interface/getall'])
         return response
-    except (ApiError, ApiUnrecoverableError) as exc:
+    except ApiError as exc:
         raise ClientError(exc) from exc
     finally:
         if isinstance(transport, asyncio.transports.Transport):
