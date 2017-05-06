@@ -10,6 +10,11 @@ This project adheres to `Semantic Versioning`_.
 `0.2.1`_ - 2015-06-11
 ---------------------
 
+Changed
+~~~~~~~
+
+- TLS certificates are now checked against system CA store.
+
 Fixed
 ~~~~~
 
