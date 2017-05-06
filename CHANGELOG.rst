@@ -13,7 +13,8 @@ This project adheres to `Semantic Versioning`_.
 Changed
 ~~~~~~~
 
-- TLS certificates are now checked against system CA store.
+- TLS certificates are now checked against system CA store, and matched against
+  the provided hostname.
 
 Fixed
 ~~~~~
