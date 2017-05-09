@@ -225,16 +225,21 @@ class TikapySslClient(TikapyBaseClient):
     RouterOS SSL API Client.
     """
 
-    def __init__(self, address, port=8729):
+    def __init__(self, address, port=8729, verify_cert=True,
+                 verify_addr=True):
         """
         Initialize client.
 
         :param address: Remote device address (maybe a hostname)
         :param port: Remote device port (defaults to 8728)
+        :param verify_cert: Verify device certificate against system CAs
+        :param verify_addr: Verify provided address against certificate
         """
         super().__init__()
         self.address = address
         self.port = port
+        self.verify_cert = verify_cert
+        self.verify_addr = verify_addr
 
     def _connect(self):
         """
@@ -242,7 +247,13 @@ class TikapySslClient(TikapyBaseClient):
         """
         self._connect_socket()
         try:
-            self._sock = ssl.wrap_socket(self._base_sock)
+            ctx = ssl.create_default_context()
+            if not self.verify_cert:
+                ctx.verify_mode = ssl.CERT_OPTIONAL
+            if not self.verify_addr:
+                ctx.check_hostname = False
+            self._sock = ctx.wrap_socket(self._base_sock,
+                                         server_hostname=self.address)
         except ssl.SSLError:
             LOG.error('could not establish SSL connection')
             raise ClientError('could not establish SSL connection')

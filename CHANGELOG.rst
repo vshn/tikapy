@@ -7,6 +7,12 @@ This project adheres to `Semantic Versioning`_.
 `Unreleased`_
 -------------
 
+Changed
+~~~~~~~
+
+- TLS certificates are now checked against system CA store, and matched against
+  the provided hostname.
+
 `0.2.1`_ - 2015-06-11
 ---------------------
 
